@@ -103,7 +103,10 @@ void Game::handleInput(sf::Event& event) {
 void Game::resetGame() {
     guessCount = 0;
     target = std::rand() % 100 + 1;
-    message = "New Game: Guess a number between 1 and 100";
+    message = "New Game: \nGuess a number between 1 and 100";
+    messageText.setFillColor(sf::Color(117, 138, 147, 255));
+    messageText.setPosition(sf::Vector2f{25.f, 250.f});
+
     messageText.setString(message);
     counterText.setString("Guesses: 0");
     gameClock.restart();
