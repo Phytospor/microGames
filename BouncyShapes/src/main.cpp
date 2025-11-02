@@ -48,7 +48,8 @@ void collision(
     float &shape1Radius, 
     float &shape2Radius, 
     sf::Vector2f &shape1Velocity, 
-    sf::Vector2f &shape2Velocity) 
+    sf::Vector2f &shape2Velocity,
+    float friction)
 {
     sf::Vector2f center1 = shape1.getPosition() + sf::Vector2f(shape1Radius, shape1Radius);
     sf::Vector2f center2 = shape2.getPosition() + sf::Vector2f(shape2Radius, shape2Radius);
@@ -61,10 +62,13 @@ void collision(
         sf::Vector2f normal = diff / distance; // relative velocity along normal 
         sf::Vector2f relativeVelocity = shape1Velocity - shape2Velocity; 
         float velAlongNormal = relativeVelocity.x*normal.x + relativeVelocity.y*normal.y; \
-        float restitution = 1.0f; // 1.0 = perfectly elastic 
+        float restitution = 1.f; // 1.0 = perfectly elastic 
         float impulse = -(1 + restitution) * velAlongNormal / 2; // equal mass 
-        // new velocities 
-        shape1Velocity += impulse * normal; shape2Velocity -= impulse * normal; 
+
+        // new velocities including friction control
+
+        shape1Velocity += impulse * normal; 
+        shape2Velocity -= impulse * normal; 
         
         // Optional overlap correction: 
 
@@ -209,9 +213,11 @@ int main(int argc, char const *argv[])
     player.setRadius(playerRadius);
 
     sf::Vector2f playerSpeed({0.0f, 0.0f}); // initial velocity = 0
-    float playerAcceleration = 10.f;  // pixels per second²
+    float playerAcceleration = 100.f;  // pixels per second²
     float playerMaxSpeed = 500.f;      // pixels per second
-    float playerFriction = 5.0f;      
+    float playerFriction = 3.5f;      
+
+    float ballFriction = 0.5f;
 
     // now I initialise the struct that contains all the circles
     std::vector<CircleData> dynamicCircles;
@@ -258,7 +264,7 @@ int main(int argc, char const *argv[])
                 if (keyEvent->scancode == sf::Keyboard::Scancode::X) 
                 {
                     float newRadius = 30.0f; // default radius
-                    sf::Vector2f startPos = {100.0f, 100.0f}; // starting position
+                    sf::Vector2f startPos = {350.0f, 100.0f}; // starting position
                     sf::CircleShape newCircle(newRadius, 32);
                     newCircle.setPosition(startPos);
                     col = hexToRGB("FAF8F1");
@@ -285,95 +291,85 @@ int main(int argc, char const *argv[])
         // Reset acceleration vector
         sf::Vector2f acceleration({0.f, 0.f});
 
-    
-        // Check key presses
+        float dt = deltaClock.restart().asSeconds(); 
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::W)) {player.move({0.f,+50.f});}
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {player.move({0.f,-50.f});}
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) {player.move({-50.f,0.f});}
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) {player.move({50.f,0.f});}
+        // Check key presses 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::W)) acceleration.y -= playerAcceleration; 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::S)) acceleration.y += playerAcceleration; 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::A)) acceleration.x -= playerAcceleration; 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::D)) acceleration.x += playerAcceleration;
 
-        std::cout << "Acceleration: " << acceleration.x << std::endl;
             
         // Update velocity
-        //playerSpeed += acceleration;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) 
-        {
-            playerSpeed.x = 0.5f;
-            playerSpeed.y = 0.5f;
-        }
-
-        player.setPosition({player.getPosition().x + playerSpeed.x, player.getPosition().y + playerSpeed.y});
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
-        std::cout << "W is being pressed!" << std::endl;
+        playerSpeed += acceleration;
         
         // Friction
-        //if (acceleration.x == 0.f && acceleration.y == 0.f) playerSpeed -= playerSpeed * playerFriction * dt;
+        if (acceleration.x == 0.f && acceleration.y == 0.f) playerSpeed -= playerSpeed * playerFriction * dt;
 
         // Limit speed
-        //float speedLength = std::sqrt(playerSpeed.x * playerSpeed.x + playerSpeed.y * playerSpeed.y);
-        //if (speedLength > playerMaxSpeed) playerSpeed = (playerSpeed / speedLength) * playerMaxSpeed;
+        float speedLength = std::sqrt(playerSpeed.x * playerSpeed.x + playerSpeed.y * playerSpeed.y);
+        if (speedLength > playerMaxSpeed) playerSpeed = (playerSpeed / speedLength) * playerMaxSpeed;
 
         // Move the player **once** per frame using delta time
+        player.move(playerSpeed * dt);
 
-        //player.move(playerSpeed * dt);
-
-        // --- Debug ---
-        std::cout << "Pos: " << player.getPosition().x << ", " << player.getPosition().y
-                << " | Speed: " << playerSpeed.x << ", " << playerSpeed.y << "\n";
-
-
-    
+        // // --- Debug ---
+        // std::cout << "Pos: " << player.getPosition().x << ", " << player.getPosition().y
+        //         << " | Speed: " << playerSpeed.x << ", " << playerSpeed.y << "\n";
+     
         // basic animation move that each frame if it's still in frame
-        //circle.setPosition({circle.getPosition().x + circleSpeed.x, circle.getPosition().y + circleSpeed.y});
-        //circle2.setPosition({circle2.getPosition().x + circle2Speed.x, circle2.getPosition().y + circle2Speed.y});
-        //circle3.setPosition({circle3.getPosition().x + circle3Speed.x, circle3.getPosition().y + circle3Speed.y});
+        circleSpeed *= 0.99f;     // 0.99 = 1% velocity lost per frame (or use dt scaling)
+        circle2Speed *= 0.99f;
+        circle3Speed *= 0.99f;
 
+        // Move circles based on their velocity (scaled by dt)
+        circle.setPosition(circle.getPosition() + circleSpeed * dt);
+        circle2.setPosition(circle2.getPosition() + circle2Speed * dt);
+        circle3.setPosition(circle3.getPosition() + circle3Speed * dt);
 
         // collision detection
-        //collision(circle, circle2, circleRadius, circle2Radius, circleSpeed, circle2Speed);
-        //collision(circle, circle3, circleRadius, circle3Radius, circleSpeed, circle3Speed); 
-        //collision(circle3, circle2, circle3Radius, circle2Radius, circle3Speed, circle2Speed);
+        collision(circle, circle2, circleRadius, circle2Radius, circleSpeed, circle2Speed, ballFriction);
+        collision(circle, circle3, circleRadius, circle3Radius, circleSpeed, circle3Speed, ballFriction); 
+        collision(circle3, circle2, circle3Radius, circle2Radius, circle3Speed, circle2Speed, ballFriction);
 
-        //collision(player, circle, playerRadius, circleRadius, playerSpeed, circleSpeed);
-        //collision(player, circle3, playerRadius, circle3Radius, playerSpeed, circle3Speed); 
-        //collision(player, circle2, playerRadius, circle2Radius, playerSpeed, circle2Speed);
+        collision(player, circle, playerRadius, circleRadius, playerSpeed, circleSpeed, ballFriction);
+        collision(player, circle3, playerRadius, circle3Radius, playerSpeed, circle3Speed, ballFriction); 
+        collision(player, circle2, playerRadius, circle2Radius, playerSpeed, circle2Speed, ballFriction);
 
 
         // reverse speed if touching the sides
-        // circleBoundaries(circle, circleSpeed.x, circleSpeed.y, circleRadius, wWidth, wHeight);
-        // circleBoundaries(circle2, circle2Speed.x, circle2Speed.y, circle2Radius, wWidth, wHeight);
-        // circleBoundaries(circle3, circle3Speed.x, circle3Speed.y, circle3Radius, wWidth, wHeight);
+        circleBoundaries(circle, circleSpeed.x, circleSpeed.y, circleRadius, wWidth, wHeight);
+        circleBoundaries(circle2, circle2Speed.x, circle2Speed.y, circle2Radius, wWidth, wHeight);
+        circleBoundaries(circle3, circle3Speed.x, circle3Speed.y, circle3Radius, wWidth, wHeight);
 
-        // circleBoundaries(player, playerSpeed.x, playerSpeed.y, playerRadius, wWidth, wHeight);
+        circleBoundaries(player, playerSpeed.x, playerSpeed.y, playerRadius, wWidth, wHeight);
 
         // my struct circles
 
         for (auto& cd : dynamicCircles) 
         {
             // Move manually
-            cd.shape.setPosition(cd.shape.getPosition() + cd.velocity);
+            cd.shape.setPosition(cd.shape.getPosition() + cd.velocity * dt);
             
             // Collisions
-            collision(cd.shape, circle, cd.radius, circleRadius, cd.velocity, circleSpeed);
-            collision(cd.shape, circle2, cd.radius, circle2Radius, cd.velocity, circle2Speed); 
-            collision(cd.shape, circle3, cd.radius, circle3Radius, cd.velocity, circle3Speed);
+            collision(cd.shape, circle, cd.radius, circleRadius, cd.velocity, circleSpeed, ballFriction);
+            collision(cd.shape, circle2, cd.radius, circle2Radius, cd.velocity, circle2Speed, ballFriction); 
+            collision(cd.shape, circle3, cd.radius, circle3Radius, cd.velocity, circle3Speed, ballFriction);
                     
             for (size_t i = 0; i < dynamicCircles.size(); i++) 
             {
-                collision(dynamicCircles[i].shape, player, dynamicCircles[i].radius, playerRadius, dynamicCircles[i].velocity, playerSpeed);
+                collision(dynamicCircles[i].shape, player, dynamicCircles[i].radius, playerRadius, dynamicCircles[i].velocity, playerSpeed, ballFriction);
                 for (size_t j = i + 1; j < dynamicCircles.size(); j++) {
-                    collision(dynamicCircles[i].shape, dynamicCircles[j].shape, dynamicCircles[i].radius, dynamicCircles[j].radius, dynamicCircles[i].velocity, dynamicCircles[j].velocity);
+                    collision(dynamicCircles[i].shape, dynamicCircles[j].shape, dynamicCircles[i].radius, dynamicCircles[j].radius, dynamicCircles[i].velocity, dynamicCircles[j].velocity, ballFriction);
                 }
             }
 
+            cd.velocity *= 0.99f;
             // Boundary check
             circleBoundaries(cd.shape, cd.velocity.x, cd.velocity.y, cd.radius, wWidth, wHeight);
 
         }
 
-    
         // basic rendering function calls
 
         window.clear(); // clear the window of anything previously drawn
