@@ -103,7 +103,6 @@ struct ColorRGB {
 ColorRGB hexToRGB(const std::string& hex) {
     std::string h = hex;
 
-    // Support optional '#'
     if (h[0] == '#')
         h = h.substr(1);
 
@@ -140,6 +139,8 @@ int main(int argc, char const *argv[])
     const int wHeight = 720;
 
     sf::RenderWindow window(sf::VideoMode({wWidth, wHeight}), "Bouncy Shapes");
+    sf::ContextSettings settings;
+    settings.antiAliasingLevel = 16;
     window.setFramerateLimit(60); // limits frame rate to 60fps
 
     // create a clock used for its internal timing
@@ -217,7 +218,11 @@ int main(int argc, char const *argv[])
     float playerMaxSpeed = 500.f;      // pixels per second
     float playerFriction = 3.5f;      
 
-    float ballFriction = 0.5f;
+    float ballFriction = 0.99f;
+
+    // make a pentagram
+
+    sf::CircleShape pentagram(80.f, 5);
 
     // now I initialise the struct that contains all the circles
     std::vector<CircleData> dynamicCircles;
@@ -240,6 +245,9 @@ int main(int argc, char const *argv[])
 
         col = hexToRGB("334443");
         player.setFillColor(sf::Color{col.r, col.g, col.b});
+
+        col = hexToRGB("BF092F");
+        pentagram.setFillColor(sf::Color{col.r, col.g, col.b});
 
         // event handling
         while (auto eventOpt = window.pollEvent()) 
@@ -327,6 +335,8 @@ int main(int argc, char const *argv[])
         circle2.setPosition(circle2.getPosition() + circle2Speed * dt);
         circle3.setPosition(circle3.getPosition() + circle3Speed * dt);
 
+        pentagram.setPosition({600.f,600.f});
+
         // collision detection
         collision(circle, circle2, circleRadius, circle2Radius, circleSpeed, circle2Speed, ballFriction);
         collision(circle, circle3, circleRadius, circle3Radius, circleSpeed, circle3Speed, ballFriction); 
@@ -379,6 +389,7 @@ int main(int argc, char const *argv[])
             window.draw(circle2);
             window.draw(circle3);
             window.draw(player);
+            window.draw(pentagram);
             for (auto& cd : dynamicCircles) 
             {
                 window.draw(cd.shape);

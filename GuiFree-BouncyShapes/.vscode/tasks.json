@@ -8,7 +8,7 @@
             "args": [
                 "-std=c++23",
                 "-arch", "arm64",
-                "src/main.cpp",
+                "src/main 2.cpp",
                 "-o", "build/BouncyShapes",
                 "-I/opt/homebrew/Cellar/sfml/3.0.2/include",
                 "-I${workspaceFolder}/include",
