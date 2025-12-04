@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Number Guessing Game",
+            "name": "Debug Game",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/game",

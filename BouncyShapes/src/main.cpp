@@ -5,6 +5,9 @@
 #include <fstream>
 
 #include <SFML/Graphics.hpp>
+#include <imgui-SFML.h>
+#include <imgui.h>
+
 
 
 // create classes and functions in different header files or keep here in from of the main function
@@ -186,11 +189,12 @@ int main(int argc, char const *argv[])
     circle3.setRadius(circle3Radius);
 
     // let's load a font so we can display some text
+    std::filesystem::path exePath = std::filesystem::current_path(); // current working directory
     sf::Font font;
-    if (!font.openFromFile("../assets/BrownieStencil-8O8MJ.ttf")) 
+    if (!font.openFromFile((exePath / "assets/BrownieStencil-8O8MJ.ttf").string())) 
     {
         throw std::runtime_error("Failed to load font!");
-    };
+    }
 
     // set up the text object that will be drawn to the screen
     sf::Text myText(font, "I am here 2", 24);
@@ -321,6 +325,15 @@ int main(int argc, char const *argv[])
         circleSpeed *= 0.99f;     // 0.99 = 1% velocity lost per frame (or use dt scaling)
         circle2Speed *= 0.99f;
         circle3Speed *= 0.99f;
+
+        std::cout << "address of circleSpeed: " << &circleSpeed << std::endl;
+        std::cout << "Size of circle Speed: " << sizeof(circleSpeed) << " bytes" << std::endl;
+        std::cout << "address of circleSpeed +1: " << &circleSpeed +1 << std::endl;
+        std::cout << "type of circleSpeed: " << typeid(circleSpeed).name() << std::endl;
+        std::cout << "char: " << sizeof(char) << " byte\n";
+        std::cout << "int: " << sizeof(int) << " bytes\n";
+        std::cout << "float: " << sizeof(float) << " bytes\n";
+        std::cout << "double: " << sizeof(double) << " bytes\n";
 
         // Move circles based on their velocity (scaled by dt)
         circle.setPosition(circle.getPosition() + circleSpeed * dt);

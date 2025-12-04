@@ -4,7 +4,6 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/homebrew/Cellar/sfml/3.0.2/include",
                 "/opt/homebrew/include"
             ],
             "defines": [],
