@@ -10,18 +10,15 @@
                 "-arch", "arm64",
 
                 "src/main.cpp",
-                
-                "-DIMGUI_TEXTURE_ID_TYPE=ImTextureRef",
 
-                "../../libraries/imgui/imgui.cpp",
-                "../../libraries/imgui/imgui_draw.cpp",
-                "../../libraries/imgui/imgui_tables.cpp",
-                "../../libraries/imgui/imgui_widgets.cpp",
-                "../../libraries/ImGui-SFML/imgui-SFML.cpp",
+                "libraries/imgui/imgui.cpp",
+                "libraries/imgui/imgui_draw.cpp",
+                "libraries/imgui/imgui_tables.cpp",
+                "libraries/imgui/imgui_widgets.cpp",
+                "libraries/ImGui-SFML/imgui-SFML.cpp",
 
-                "-I../../libraries/imgui",
-                "-I../../libraries/ImGui-SFML",
-                "-I../../libraries/ImGui-SFML/imgui",
+                "-I/libraries/imgui",
+                "-I/libraries/ImGui-SFML",
                 "-I/opt/homebrew/include",
 
                 "-L/usr/local/lib",

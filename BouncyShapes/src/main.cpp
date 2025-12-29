@@ -3,10 +3,11 @@
 #include <algorithm> // for std::swap
 #include <memory>
 #include <fstream>
+#include <filesystem>
 
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
-#include <imgui-SFML.h>
+#include "../libraries/ImGui-SFML/imgui-SFML.h"
 
 // create classes and functions in different header files or keep here in from of the main function
 
@@ -63,7 +64,7 @@ void collision(
     if (distance < minDistance) { // collision normal 
         sf::Vector2f normal = diff / distance; // relative velocity along normal 
         sf::Vector2f relativeVelocity = shape1Velocity - shape2Velocity; 
-        float velAlongNormal = relativeVelocity.x*normal.x + relativeVelocity.y*normal.y; \
+        float velAlongNormal = relativeVelocity.x*normal.x + relativeVelocity.y*normal.y;
         float restitution = 1.f; // 1.0 = perfectly elastic 
         float impulse = -(1 + restitution) * velAlongNormal / 2; // equal mass 
 
@@ -157,8 +158,9 @@ int main(int argc, char const *argv[])
     ImGui::GetStyle().ScaleAllSizes(1.0f);
 
     // the imgui colour wheel requires floats from 0-1 instead of inits
-
-    float c[3] = {0.0f, 1.0f, 1.0f};
+    ColorRGB col;
+    col = hexToRGB("6FA4AF");
+    float c[3] = {col.r/255.f,col.g/255.f,col.b/255.f};
 
     // let's make a shape that we will draw to the screen
     float circleRadius = 50; // radius to draw the circle
@@ -212,13 +214,19 @@ int main(int argc, char const *argv[])
 
     // set up the text object that will be drawn to the screen
     sf::Text myText(font, "I am here 2", 24);
+
     myText.setFillColor(sf::Color::White); // optional
     myText.setPosition({100, 100});   // optional
 
-    // position the top-left corner of the text so that the text aligns on the bottom
-    // text character size is in pixels, so move the text up from the bottom by its height
-    myText.setPosition({10, wHeight - (float)myText.getCharacterSize()});
+    sf::Rect<float> textBounds = myText.getLocalBounds();
+    float padding = 10.f;
+    myText.setPosition({
+    wWidth - textBounds.size.x - padding,
+    wHeight - textBounds.size.y - padding});
 
+    // basic rendering function calls
+    sf::Text myText2(font, displayString, 24);
+    myText2.setPosition({10, wHeight - (float)myText.getCharacterSize()});
 
      // player
 
@@ -245,10 +253,13 @@ int main(int argc, char const *argv[])
     {
 
         // set the circle properties, because they may have been updated with the ui
-        ColorRGB col;
 
-        col = hexToRGB("6FA4AF");
-        circle.setFillColor(sf::Color{col.r, col.g, col.b});
+        sf::Color circleColor(
+        static_cast<uint8_t>(c[0] * 255),
+        static_cast<uint8_t>(c[1] * 255),
+        static_cast<uint8_t>(c[2] * 255)
+        );
+        circle.setFillColor(circleColor);
 
         col = hexToRGB("B8C4A9");
         circle2.setFillColor(sf::Color{col.r, col.g, col.b});
@@ -311,7 +322,9 @@ int main(int argc, char const *argv[])
         }
 
         // update imgui for this frame with the time that the last frame took
-        ImGui::SFML::Update(window, deltaClock.restart());
+        sf::Time dt_gui = deltaClock.restart(); 
+        ImGui::SFML::Update(window,dt_gui);
+        float dt = dt_gui.asSeconds();
 
         // draw the UI
 
@@ -325,17 +338,21 @@ int main(int argc, char const *argv[])
         ImGui::ColorEdit3("Colour Circle", c);
         ImGui::InputText("Input Text", displayString, 255);
         ImGui::SameLine();
+        
         if (ImGui::Button("Reset Circle"))
         {
-            circle.setPosition({0,0});
+            circle.setPosition({50,50});
         }
+
         ImGui::End();
 
-        //float dt = deltaClock.restart().asSeconds();
+        sf::Vector2f circleCenter = circle.getPosition() + sf::Vector2f(circle.getRadius(), circle.getRadius());
+        circle.setRadius(circleRadius);
+        circle.setPointCount(circleSegments);
+        circle.setPosition(circleCenter - sf::Vector2f(circleRadius, circleRadius));
+
         // Reset acceleration vector
         sf::Vector2f acceleration({0.f, 0.f});
-
-        float dt = deltaClock.restart().asSeconds(); 
 
         // Check key presses 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::W)) acceleration.y -= playerAcceleration; 
@@ -406,7 +423,7 @@ int main(int argc, char const *argv[])
             
             // Collisions
             collision(cd.shape, circle, cd.radius, circleRadius, cd.velocity, circleSpeed, ballFriction);
-            collision(cd.shape, circle2, cd.radius, circle2Radius, cd.velocity, circle2Speed, ballFriction); 
+            collision(cd.shape, circle2, cd.radius, circle2Radius, cd.velocity, circle2Speed, ballFriction);
             collision(cd.shape, circle3, cd.radius, circle3Radius, cd.velocity, circle3Speed, ballFriction);
                     
             for (size_t i = 0; i < dynamicCircles.size(); i++) 
@@ -423,7 +440,7 @@ int main(int argc, char const *argv[])
 
         }
 
-        // basic rendering function calls
+        myText2.setString(displayString);
 
         window.clear(); // clear the window of anything previously drawn
         if (drawCircle)
@@ -441,6 +458,7 @@ int main(int argc, char const *argv[])
         if (drawText) // draw the text if the boolean is true
         {
             window.draw(myText);
+            window.draw(myText2);
         }
         ImGui::SFML::Render(window);
         window.display(); // call the window display function
