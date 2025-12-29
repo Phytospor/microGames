@@ -8,22 +8,36 @@
             "args": [
                 "-std=c++23",
                 "-arch", "arm64",
+
                 "src/main.cpp",
+                
+                "-DIMGUI_TEXTURE_ID_TYPE=ImTextureRef",
+
+                "../../libraries/imgui/imgui.cpp",
+                "../../libraries/imgui/imgui_draw.cpp",
+                "../../libraries/imgui/imgui_tables.cpp",
+                "../../libraries/imgui/imgui_widgets.cpp",
+                "../../libraries/ImGui-SFML/imgui-SFML.cpp",
+
+                "-I../../libraries/imgui",
+                "-I../../libraries/ImGui-SFML",
+                "-I../../libraries/ImGui-SFML/imgui",
                 "-I/opt/homebrew/include",
+
                 "-L/usr/local/lib",
                 "-lsfml-graphics",
                 "-lsfml-window",
                 "-lsfml-system",
                 "-lsfml-audio",
                 "-lsfml-network",
-                "-I../../libraries/ImGui-SFML/imgui",
-                "-I../../libraries/ImGui-SFML",
+
                 "-framework", "Cocoa",
                 "-framework", "OpenGL",
                 "-framework", "IOKit",
                 "-framework", "CoreVideo",
-                "-o", "build/BouncyShapes-GUI",
-                "-Wl,-rpath,/usr/local/lib"
+
+                "-Wl,-rpath,/usr/local/lib",
+                "-o", "build/BouncyShapes-GUI"
             ],
             "group": { "kind": "build", "isDefault": true },
             "problemMatcher": ["$gcc"],

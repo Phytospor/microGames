@@ -5,10 +5,8 @@
 #include <fstream>
 
 #include <SFML/Graphics.hpp>
-#include <imgui-SFML.h>
 #include <imgui.h>
-
-
+#include <imgui-SFML.h>
 
 // create classes and functions in different header files or keep here in from of the main function
 
@@ -17,7 +15,8 @@ void reverseSpeed(float& x)
     x = -x;
 }
 
-void circleBoundaries(sf::CircleShape &shape, float& shapeSpeedX, float& shapeSpeedY, float radius, int width, int height)
+void circleBoundaries(sf::CircleShape 
+    &shape, float& shapeSpeedX, float& shapeSpeedY, float radius, int width, int height)
 {
         if (shape.getPosition().x < 0)
         {
@@ -145,9 +144,21 @@ int main(int argc, char const *argv[])
     sf::RenderWindow window(sf::VideoMode({wWidth, wHeight}), "Bouncy Shapes");
     window.setFramerateLimit(60); // limits frame rate to 60fps
 
-    // create a clock used for its internal timing
-
+    // initialise IMGUI
+    if (!ImGui::SFML::Init(window))
+    {
+        throw std::runtime_error("ImGui-SFML initialization failed");
+    }
+        // create a clock used for its internal timing
     sf::Clock deltaClock; //
+
+    // scale ImGui UI by a given factor, does not affect text size
+
+    ImGui::GetStyle().ScaleAllSizes(1.0f);
+
+    // the imgui colour wheel requires floats from 0-1 instead of inits
+
+    float c[3] = {0.0f, 1.0f, 1.0f};
 
     // let's make a shape that we will draw to the screen
     float circleRadius = 50; // radius to draw the circle
@@ -195,6 +206,9 @@ int main(int argc, char const *argv[])
     {
         throw std::runtime_error("Failed to load font!");
     }
+
+    // setup character array to set the text - this can be changed in the ImGui window
+    char displayString[255] = "Sample Text";
 
     // set up the text object that will be drawn to the screen
     sf::Text myText(font, "I am here 2", 24);
@@ -246,10 +260,15 @@ int main(int argc, char const *argv[])
         player.setFillColor(sf::Color{col.r, col.g, col.b});
 
         // event handling
+
         while (auto eventOpt = window.pollEvent()) 
         {
             if (!eventOpt.has_value()) continue;
             auto& event = *eventOpt;
+
+            // pass the event to imgui to be parsed
+
+            ImGui::SFML::ProcessEvent(window, event);
 
             // this event triggers when the window is closed
             if (event.is<sf::Event::Closed>())
@@ -290,6 +309,27 @@ int main(int argc, char const *argv[])
                     
             }
         }
+
+        // update imgui for this frame with the time that the last frame took
+        ImGui::SFML::Update(window, deltaClock.restart());
+
+        // draw the UI
+
+        ImGui::Begin("Window Title");
+        ImGui::Text("Window Text!");
+        ImGui::Checkbox("Draw Circle", &drawCircle);
+        ImGui::SameLine();
+        ImGui::Checkbox("Draw Text", &drawText);
+        ImGui::SliderFloat("Radius", &circleRadius, 0.0f, 300.0f);
+        ImGui::SliderInt("Sides", &circleSegments, 3, 64);
+        ImGui::ColorEdit3("Colour Circle", c);
+        ImGui::InputText("Input Text", displayString, 255);
+        ImGui::SameLine();
+        if (ImGui::Button("Reset Circle"))
+        {
+            circle.setPosition({0,0});
+        }
+        ImGui::End();
 
         //float dt = deltaClock.restart().asSeconds();
         // Reset acceleration vector
@@ -402,6 +442,7 @@ int main(int argc, char const *argv[])
         {
             window.draw(myText);
         }
+        ImGui::SFML::Render(window);
         window.display(); // call the window display function
     }
 
