@@ -172,6 +172,7 @@ int main(int argc, char const *argv[])
     float circle2SpeedY = 3.0f; // both must be read from input file
     bool drawCircle = true; // whether or not to draw the circle
     bool drawText = true; // whether or not to draw the text
+    bool showMyText2 = false;
 
     sf::Vector2f circleSpeed({circleSpeedX,circleSpeedY});
     sf::Vector2f circle2Speed({circle2SpeedX,circle2SpeedY});
@@ -337,11 +338,21 @@ int main(int argc, char const *argv[])
         ImGui::SliderInt("Sides", &circleSegments, 3, 64);
         ImGui::ColorEdit3("Colour Circle", c);
         ImGui::InputText("Input Text", displayString, 255);
+        showMyText2 = true;
+        if (ImGui::Button("Set Text"))
+        {
+            myText2.setString(displayString);
+            
+        }
         ImGui::SameLine();
         
+
         if (ImGui::Button("Reset Circle"))
         {
-            circle.setPosition({50,50});
+            circle.setPosition({wWidth/2.f - circle.getRadius(),wHeight/2.f - circle.getRadius()});
+            circleSpeedX = 0.0f;
+            circleSpeedY = 0.0f;
+            circleSpeed = {0.f,0.f};
         }
 
         ImGui::End();
@@ -458,12 +469,17 @@ int main(int argc, char const *argv[])
         if (drawText) // draw the text if the boolean is true
         {
             window.draw(myText);
-            window.draw(myText2);
+
+            if (showMyText2)
+                {
+                    window.draw(myText2);
+                }
         }
         ImGui::SFML::Render(window);
         window.display(); // call the window display function
     }
 
+    ImGui::SFML::Shutdown();
     return 0;
 }
 
