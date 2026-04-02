@@ -5,7 +5,7 @@
 // components.hpp stores all of our components
 
 #pragma once
-#include "Vec2.h"
+#include "Vec2.hpp"
 #include <SFML/Graphics.hpp>
 
 

@@ -1,8 +1,10 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <map>
 #include <memory>
 #include <algorithm>
+#include "Entity.h"
 
 class Entity;
 
@@ -32,4 +34,5 @@ public:
     const EntityVec& getEntities(const std::string& tag);
 
     const EntityMap& getEntityMap();
+
 };

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Entity.cpp"
-#include "EntityManager.cpp"
+#include "Entity.h"
+#include "Vec2.hpp"
 
+#include "EntityManager.h"
 #include <SFML/Graphics.hpp>
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -36,13 +37,14 @@ class Game
     void sLifespan();       // System: Lifespan
     void sRender();         // System: Render / Drawing
     void sGUI();
-    void sEnemySpawner();   //System: spawns Enemies
     void sCollision();      //System: collisions
+    void sEnemySpawner();                   // System: Spawns Enemies
 
     void spawnPlayer();
     void spawnEnemy();
     void spawnSmallEnemies(std::shared_ptr<Entity> entity);
-    void spawnBullet(std::shared_ptr<Entity> entity, const Vec2f & mousePos);
+    
+    void spawnBullet(std::shared_ptr<Entity> entity, const Vec2<float> & mousePos);
     void spawnSpecialWeapon(std::shared_ptr<Entity> entity);
 
     std::shared_ptr<Entity> player();
@@ -52,4 +54,4 @@ public:
 
     Game(const std::string & config); // constructor, takes in game config
     void run();
-}
+};

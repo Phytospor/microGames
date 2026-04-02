@@ -1,6 +1,5 @@
 #include "EntityManager.h"
 
-
 void EntityManager::update()
 {
     // add all the entities that we want to add

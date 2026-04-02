@@ -1,41 +1,37 @@
-#pragma once
-#include "Components.hpp"
+#include "Entity.h"
 
-
-using ComponentTuple = std::tuple<
-    CTransform,
-    CShape,
-    CCollision,
-    CInput,
-    CScore,
-    CLifespan
->;
-
-
-class Entity
+Entity::Entity(const size_t & i, const std::string & t)
+    : m_id(i)
+    , m_tag(t)
 {
+}
 
-    // EntityManager is now a friend, it can use our private constructor
-    // This ensures we can't make Entity instances outside EntityManager
-    friend class EntityManager;
+bool Entity::isActive() const
+{
+    return m_active;
+}
 
-    bool        m_active    = true;
-    size_t      m_id        = 0;
-    std::string m_tag       = "default";
+const std::string & Entity::tag() const
+{
+    return m_tag;
+}
 
-    // the constructor of entity is private, only its friends can use it
-    Entity(const size_t & id, const std::string & tag);
+const size_t & Entity::id() const
+{
+    return m_id;
+}
 
-public:
+void Entity::destroy() 
+{
+    m_active = false;
+}
 
-    ComponentTuple m_components;
-
-    // constructor and destructor
-    ~Entity();
-
-    // private member access functions
-    bool isActive() const;
-    const std::string & tag() const;
-    const size_t & id() const;
-    void destroy();
-};
+Entity::~Entity()
+{
+    // if (cTransform)     { delete cTransform; }
+    // if (cShape)         { delete cShape; }
+    // if (cCollision)     { delete cCollision; }
+    // if (cInput)         { delete cInput; }
+    // if (cScore)         { delete cScore; }
+    // if (cLifespan)      { delete cLifespan; }
+}
