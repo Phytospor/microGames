@@ -7,4 +7,6 @@ int main()
 {
     Game g("assets/config.txt");
     g.run();
+
+    return 0;
 }

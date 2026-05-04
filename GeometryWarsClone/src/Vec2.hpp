@@ -34,77 +34,82 @@ public:
 
     Vec2 operator + (const Vec2& rhs) const
     {
-        //to do
-        return Vec2();
+        
+        return Vec2(x + rhs.x, y + rhs.y);
     }
 
     Vec2 operator - (const Vec2& rhs) const
     {
-        //to do
-        return Vec2();
+        //a - b gives the vector from b to a.
+        return Vec2(x - rhs.x, y - rhs.y);
     }
 
-    Vec2 operator / (const Vec2& rhs) const
+
+    Vec2 operator / (const float val) const
     {
-        //to do
-        return Vec2();
+        if (val == 0.0f)
+        {
+            return Vec2(0.0f, 0.0f); // or handle differently
+        }
+        else
+            return Vec2(x / val, y / val);
     }
 
-    Vec2 operator * (const Vec2& rhs) const
+    Vec2 operator * (const float & val) const
     {
-        //to do
-        return Vec2();
+        return Vec2(x * val, y * val);
     }
 
     bool operator == (const Vec2& rhs) const
     {
-        //to do
-        return false;
+        return (x == rhs.x && y == rhs.y);
     }
 
     bool operator != (const Vec2& rhs) const
     {
-        //to do
-        return false;
+        return (x != rhs.x || y != rhs.y);
     }
 
-    void operator += (const Vec2& rhs) const
+    void operator += (const Vec2& rhs) 
     {
-        //to do
-
+      x+=rhs.x;
+      y+=rhs.y;
     }
 
-    void operator -= (const Vec2& rhs) const
+    void operator -= (const Vec2& rhs)
     {
-        //to do
-
+      x-=rhs.x;
+      y-=rhs.y;
     }
 
-    void operator *= (const T val) const
+    void operator *= (const T val)
     {
-        //to do
-
+      x*=val;
+      y*=val;
     }
 
-    void operator /= (const T val) const
+    void operator /= (const T val)
     {
-        //to do
-
+      x/=val;
+      y/=val;
     }
 
     float dist(const Vec2& rhs) const
     {
-        // todo
+        float dx = x - rhs.x;
+        float dy = y - rhs.y;
+        return sqrtf(dx * dx + dy * dy);
     }
 
-    float lenght() const
+    float length () const
     {
-
+        return(sqrtf(x*x + y*y));
     }
 
-    void normalise()
+    Vec2<float> normalise() const
     {
-
+        T len = length();
+        return Vec2(x / len, y / len);
     }
 
 

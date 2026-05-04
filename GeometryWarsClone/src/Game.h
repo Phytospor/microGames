@@ -48,6 +48,7 @@ class Game
     void spawnSpecialWeapon(std::shared_ptr<Entity> entity);
 
     std::shared_ptr<Entity> player();
+    sf::Clock m_enemyClock;
 
 
 public:
