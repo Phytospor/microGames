@@ -26,12 +26,4 @@ void Entity::destroy()
     m_active = false;
 }
 
-Entity::~Entity()
-{
-    // if (cTransform)     { delete cTransform; }
-    // if (cShape)         { delete cShape; }
-    // if (cCollision)     { delete cCollision; }
-    // if (cInput)         { delete cInput; }
-    // if (cScore)         { delete cScore; }
-    // if (cLifespan)      { delete cLifespan; }
-}
+Entity::~Entity() = default;

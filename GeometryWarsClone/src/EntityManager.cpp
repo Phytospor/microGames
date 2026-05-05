@@ -24,9 +24,14 @@ void EntityManager::update()
 
 void EntityManager::removeDeadEntities(EntityVec & vec)
 {
-	// use std::remove_if to remove dead entities
-	// probably not the fastest solution, but it is safe
-
+    vec.erase(
+        std::remove_if(vec.begin(), vec.end(),
+            [](const std::shared_ptr<Entity>& e)
+            {
+                return !e->isActive();
+            }),
+        vec.end()
+    );
 
 }
 

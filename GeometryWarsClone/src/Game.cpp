@@ -172,7 +172,7 @@ void Game::run()
 
     while (m_window.isOpen())
     {
-        //updatte the entity manager
+        //update the entity manager
         if (m_paused)
         {
             sUserInput();
@@ -183,6 +183,8 @@ void Game::run()
             m_entities.update();
 
             ImGui::SFML::Update(m_window, m_deltaClock.restart());
+            sf::Time dt = m_deltaClock.restart();
+            float deltaTime = dt.asSeconds();
 
             sUserInput();
             sEnemySpawner();
@@ -270,7 +272,7 @@ void Game::spawnEnemy()
     int fillB = rand() % 256;
 
     e->add<CShape>(
-        m_enemyConfig.CR,vertices, 
+        m_enemyConfig.SR,vertices, 
         sf::Color(fillR,fillG,fillB),
         sf::Color(m_enemyConfig.OR,m_enemyConfig.OG,m_enemyConfig.OB),
         m_enemyConfig.OT);
@@ -319,6 +321,30 @@ void Game::spawnBullet(std::shared_ptr<Entity> entity, const Vec2<float>& target
     // todo: implement the spawning of a bullet which travels toward target
     //      - bullet speed is given as a scalar speed
     //      - you must set the velocity by using formula in notes
+    auto b = m_entities.addEntity("bullet");
+
+    Vec2<float> spawnPoint = player()->get<CTransform>().pos;
+
+
+    b->add<CTransform>(
+                    spawnPoint,
+                    (target-spawnPoint).normalise()*m_bulletConfig.S,
+                    0);
+
+    b->add<CShape>(
+        m_bulletConfig.SR,
+        m_bulletConfig.V,
+        sf::Color(m_bulletConfig.FR, m_bulletConfig.FG, m_bulletConfig.FB),
+        sf::Color(m_bulletConfig.OR, m_bulletConfig.OG, m_bulletConfig.OB),
+        m_bulletConfig.OT);
+    
+    b->add<CCollision>(
+        m_bulletConfig.CR
+    );
+
+    b->add<CLifespan>(
+        m_bulletConfig.L
+    );
 }
 
 
@@ -336,26 +362,36 @@ void Game::sMovement()
     // add each velocity to the player
     
     // sample movment speed update for the player:
-    auto& t = player()->get<CTransform>();
+    auto& pt = player()->get<CTransform>();
     auto& input = player()->get<CInput>();
 
-    t.velocity = Vec2<float>(0.0f, 0.0f);
+    Vec2<float> dir(0.0f, 0.0f);
 
-    if (input.up)    { t.velocity.y = -4.0f; }
-    if (input.down)  { t.velocity.y =  4.0f; }
-    if (input.left)  { t.velocity.x = -4.0f; }
-    if (input.right) { t.velocity.x =  4.0f; }
+    if (input.up)    { dir.y -= 1.0f;}
+    if (input.down)  { dir.y += 1.0f; }
+    if (input.left)  { dir.x -= 1.0f; }
+    if (input.right) { dir.x += 1.0f; }
 
-    t.pos.x += t.velocity.x;
-    t.pos.y += t.velocity.y;
+    if (dir.x != 0.0f || dir.y != 0.0f)
+    {
+        pt.velocity = dir.normalise() * m_playerConfig.S;
+    }
+    else
+    {
+        pt.velocity = Vec2<float>(0.0f, 0.0f);
+    }
 
     for (auto e : m_entities.getEntities())
     {
+        if (!e->has<CTransform>())
+        {
+            continue;
+        }
+
         auto& t = e->get<CTransform>();
         t.pos += t.velocity;
     }
-
-
+    
 }   
 
 
@@ -378,21 +414,172 @@ void Game::sCollision()
     // ToDo:    implement all proper collisions between entities
     //          be sure to use the collision radius, not the shape radius
     // between player and enemies, between bullets and enemies, and the player and the walls, could also do enemies and walls.
-    for (auto p : m_entities.getEntities("Player"))
-    // {
-    //     if (p->get(CTransform))
-    // }
+    for (auto & p : m_entities.getEntities("player"))
+    {
+        if (p->has<CTransform>())
+        {
+            continue;
+        }
+    }
+
+    // enemies vs enemies
+
+    auto enemies = m_entities.getEntities("enemy");
+
+    for (size_t i = 0; i < enemies.size(); i++)
+    {
+        for (size_t j = i + 1; j < enemies.size(); j++)
+        {
+            auto& a = enemies[i];
+            auto& b = enemies[j];
+
+            if (!a->has<CTransform>() || !a->has<CCollision>() ||
+                !b->has<CTransform>() || !b->has<CCollision>())
+            {
+                continue;
+            }
+
+            auto& ta = a->get<CTransform>();
+            auto& tb = b->get<CTransform>();
+            auto& ca = a->get<CCollision>();
+            auto& cb = b->get<CCollision>();
+
+            // calculate distance
+            Vec2<float> diff = tb.pos - ta.pos;
+            float distSq = diff.x * diff.x + diff.y * diff.y;
+
+            // calculate radius
+            float radiiSum = ca.radius + cb.radius;
+
+            // compare and reverse if true
+            
+            if (distSq < radiiSum * radiiSum)
+            {
+            float distance = std::sqrt(distSq);
+
+            Vec2<float> normal;
+            if (distance == 0.0f)
+            {
+                normal = Vec2<float>(1.0f, 0.0f);
+                distance = .0001f;
+            }
+            else
+            {
+                normal = diff / distance;
+            }
+
+            // Relative velocity
+            Vec2<float> relativeVelocity = tb.velocity - ta.velocity;
+            float velAlongNormal = relativeVelocity.x * normal.x + relativeVelocity.y * normal.y;
+
+            //If already moving apart, skip impulse response
+
+            if (velAlongNormal > 0.0f)
+            {
+                continue;
+            }
+
+            // Positional correction
+            float overlap = radiiSum - distance;
+            float correctionPercent = 0.2f;
+            Vec2<float> correction = normal * (overlap * 0.5f * correctionPercent);
+
+            ta.pos -= correction;
+            tb.pos += correction;
+
+            // Elastic collision impulse (equal mass)
+            float restitution = 0.5f;
+            float impulseMagnitude = -(1.0f + restitution) * velAlongNormal / 2.0f;
+
+            Vec2<float> impulse = normal * impulseMagnitude;
+
+            ta.velocity -= impulse;
+            tb.velocity += impulse;
+            }
+        }   
+    }
+
     
     for (auto b : m_entities.getEntities("bullet"))
     {
+
+        // do collision logic
+        auto bulletPos = b->get<CTransform>().pos;
+        auto bulletRadius = b->get<CCollision>().radius;
+
         for (auto e : m_entities.getEntities("enemy"))
         {
-            // do collision logic
+            auto enemyPos = e->get<CTransform>().pos;
+            auto enemyRadius = e->get<CCollision>().radius;
+
+            if (enemyPos.dist(bulletPos) <= enemyRadius + bulletRadius)
+            {
+                spawnSmallEnemies(e);
+                e->destroy();
+                b->destroy();
+                break;
+            }
+
         }
 
         for (auto e: m_entities.getEntities("smallEnemy"))
         {
             // do collision logic
+        }
+    }
+
+    // all entities vs window border
+
+    for (auto & entity : m_entities.getEntities())
+    {
+
+        if (entity->tag() == "bullet")
+        {
+
+        }
+        // skip if entity does not have collide component
+        if (!entity->has<CCollision>() || !entity->has<CTransform>() || entity->tag() == "Player" || entity->tag() == "bullet")
+        {
+            continue;
+        }
+
+        auto & transform = entity->get<CTransform>();
+        auto & collision = entity->get<CCollision>();
+
+        if (transform.pos.x + collision.radius >= m_window.getSize().x)
+        {
+            if (transform.velocity.x > 0)
+            {
+                transform.velocity.x *= -1;
+                transform.pos.x = m_window.getSize().x - collision.radius;
+            }
+        }
+
+        if (transform.pos.x - collision.radius <=0)
+        {
+            if (transform.velocity.x < 0)
+            {
+                transform.velocity.x *= -1;
+                transform.pos.x = collision.radius;
+            }
+        }
+
+        if (transform.pos.y + collision.radius >= m_window.getSize().y)
+        {
+            if (transform.velocity.y > 0)
+            {
+                transform.velocity.y *= -1;
+                transform.pos.y = m_window.getSize().y - collision.radius;
+            }
+        }
+
+        if (transform.pos.y - collision.radius <=0)
+        {
+            if (transform.velocity.y < 0)
+            {
+                transform.velocity.y *= -1;
+                transform.pos.y = collision.radius;
+            }
         }
     }
 }
@@ -493,6 +680,17 @@ void Game::sUserInput()
                 // TODO: set player's input componetn up to true
                 std::cout << "A key Pressed\n";
                 player()->get<CInput>().left = true;  
+            }
+
+            if (keyPressed->scancode == sf::Keyboard::Scancode::Space)
+            {
+                // TODO: set player's input componetn up to true
+                std::cout << "Space key Pressed\n";
+                Vec2<float> target(
+                    sf::Mouse::getPosition(m_window).x,
+                    sf::Mouse::getPosition(m_window).y
+                    );
+                spawnBullet(player(), target);
             }   
             
 
@@ -530,6 +728,10 @@ void Game::sUserInput()
                 // TODO: set player's input componetn up to true
                 std::cout << "A key released\n";
                 player()->get<CInput>().left = false;  
+            }
+            if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
+            {
+            std::exit(0);
             }   
         }
 

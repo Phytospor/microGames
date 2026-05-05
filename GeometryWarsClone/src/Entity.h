@@ -47,6 +47,12 @@ public:
     }
 
     template <typename T>
+    bool has() const
+    {
+        return std::get<T>(m_components).exists;
+    }
+
+    template <typename T>
     bool exists() const
     {
         return std::get<T>(m_components).exists;
