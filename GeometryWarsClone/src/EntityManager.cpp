@@ -14,7 +14,7 @@ void EntityManager::update()
     // remove dead entities from the vector of all entities
     removeDeadEntities(m_entities);
 
-    // remove dead entities from each vector in the entitiy map 
+    // remove dead entities from each vector in the entitiy map
     // C++20 way of iterating through [key,value] pairs in a map
     for (auto& [tag, entityVec] : m_entityMap)
     {
@@ -32,12 +32,11 @@ void EntityManager::removeDeadEntities(EntityVec & vec)
             }),
         vec.end()
     );
-
 }
 
 std::shared_ptr<Entity> EntityManager::addEntity(const std::string & tag)
 {
-	// creat the entity shared pointer
+	// create the entity shared pointer
 	auto entity = std::shared_ptr<Entity>(new Entity(m_totalEntities++, tag));
 
 	// add it to the vector of entities that will be added on next update() call

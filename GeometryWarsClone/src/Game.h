@@ -20,14 +20,27 @@ class Game
     EntityManager       m_entities;     // vector of entities to maintain
     sf::Font            m_font;         // the font we will use to draw
     sf::Text            m_text;         // the score text to be drawn to the screen
+    sf::Text            m_title;
     PlayerConfig         m_playerConfig;
     EnemyConfig          m_enemyConfig;
     BulletConfig         m_bulletConfig;
     sf::Clock           m_deltaClock;
+    sf::Clock           m_specialWeaponClock;
+    float                m_specialCooldown = 5.0f;
+    bool                m_specialReady = true;
+
+    bool                m_showDeathPopup = false;
+    int                 m_lastDeathScore = 0;
     int                 m_score = 0;
+    
     int                 m_currentFrame = 0;
     int                 m_lastEnemySpawnTime = 0;
     bool                m_paused = false;
+
+    bool                m_movementEnabled = true;
+    bool                m_collisionEnabled = true;
+    bool                m_lifespanEnabled = true;
+    bool                m_spawnerEnabled = true;
     
     void init(const std::string & config);   // initialise the GameState with a config file
     void setPaused(bool paused);            // pause the game
